@@ -7,6 +7,8 @@ import com.ajua.drones.models.Medication;
 import com.ajua.drones.models.State;
 import com.ajua.drones.repository.DroneRepository;
 import com.ajua.drones.repository.MedicationRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,13 @@ public class DronesService {
                         responseDTO.setStatusCode(200);
 
                     });
+        }catch (ConstraintViolationException e) {
+            StringBuilder errorMessage = new StringBuilder("Drone could not be registered! ");
+            for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+                errorMessage.append(extractMessage(violation.toString())).append(" ");
+            }
+            responseDTO.setMessage(errorMessage.toString().trim());
+            responseDTO.setStatusCode(400);
         } catch (Exception e){
             responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
             responseDTO.setStatusCode(500);
@@ -101,8 +110,14 @@ public class DronesService {
             log.error("error loading drone "+e);
             responseDTO.setMessage("Drone could not be loaded! " + e.getMessage());
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
+        } catch (ConstraintViolationException e) {
+            StringBuilder errorMessage = new StringBuilder("Drone could not be loaded! ");
+            for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+                errorMessage.append(extractMessage(violation.toString())).append(" ");
+            }
+            responseDTO.setMessage(errorMessage.toString().trim());
+            responseDTO.setStatusCode(400);
         }
-
         return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
@@ -153,7 +168,6 @@ public class DronesService {
             responseDTO.setMessage("Could not check for drones due to an error. Try again later" );
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
         }
-
         return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
@@ -198,6 +212,15 @@ public class DronesService {
                 log.warn("Drone with serial number " + drone.getSerialNumber() + " has low battery.");
             }
         }
+    }
+
+    public static String extractMessage(String violationMessage) {
+        // Find the start of the actual message
+        int messageStartIndex = violationMessage.indexOf("interpolatedMessage='") + "interpolatedMessage='".length();
+        // Find the end of the actual message
+        int messageEndIndex = violationMessage.indexOf("',", messageStartIndex);
+        // Extract and return the message
+        return violationMessage.substring(messageStartIndex, messageEndIndex);
     }
 
 }
