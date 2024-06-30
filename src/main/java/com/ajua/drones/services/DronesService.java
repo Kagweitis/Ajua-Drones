@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +56,11 @@ public class DronesService {
             }
             responseDTO.setMessage(errorMessage.toString().trim());
             responseDTO.setStatusCode(400);
-        } catch (Exception e){
+        } catch (HttpMessageNotReadableException e){
+            responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
+            responseDTO.setStatusCode(400);
+        }
+        catch (Exception e){
             responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
             responseDTO.setStatusCode(500);
         }
