@@ -43,7 +43,6 @@ This Spring Boot application manages drones and their operations.
   ```
   PUT http://localhost:8080/api/v1/drones/load
   {
-    {
     "medications": [
         {
             "name": "MedicationA",
@@ -90,7 +89,3 @@ You can run the unit tests using Maven:
 ## Contributors
 
 - [George Kimani](https://github.com/Kagweitis)
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
