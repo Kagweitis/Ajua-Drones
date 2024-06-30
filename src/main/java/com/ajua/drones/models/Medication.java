@@ -28,6 +28,7 @@ public class Medication {
     @Pattern(regexp = "^[A-Z0-9_]+$", message = "Code can only contain upper case letters, numbers, and '_'.")
     private String code;
 
+    @NotNull
     private Double weight;
 
     @Lob

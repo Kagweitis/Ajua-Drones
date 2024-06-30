@@ -6,6 +6,7 @@ import com.ajua.drones.DTO.ResponseDTO;
 import com.ajua.drones.models.Drone;
 import com.ajua.drones.models.Medication;
 import com.ajua.drones.services.DronesService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class DronesController {
     }
 
     @PostMapping("/load")
-    public ResponseEntity<ResponseDTO> loadDrone(@RequestBody RequestDTO requestDTO){
+    public ResponseEntity<ResponseDTO> loadDrone(@RequestBody @NonNull RequestDTO requestDTO){
         return dronesService.loadDrone(requestDTO.getDroneSerialNumber(), requestDTO.getMedications());
     }
 

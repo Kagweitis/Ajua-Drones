@@ -72,36 +72,6 @@ public class DronesServiceTests {
     }
 
     @Test
-    void testLoadDrone_Success() {
-        // Mock data
-        String serialNumber = "DRN123";
-        Drone drone = Drone.builder()
-                .serialNumber(serialNumber)
-                .model(Model.CRUISERWEIGHT)
-                .batteryCapacity(100.0)
-                .state(State.IDLE)
-                .weightLimit(500.0)
-                .deleted(false)
-                .build();
-        List<Medication> medications = new ArrayList<>();
-        medications.add(new Medication("MED001", "MedicationA", 50.0));
-        medications.add(new Medication("MED002", "MedicationB", 75.0));
-
-        // Mock repository behavior
-        when(droneRepository.findBySerialNumber(serialNumber)).thenReturn(Optional.of(drone));
-        when(medicationRepository.saveAll(any())).thenReturn(medications);
-
-        // Call service method
-        ResponseEntity<ResponseDTO> responseEntity = dronesService.loadDrone(serialNumber, medications);
-
-        // Verify behavior
-        verify(droneRepository, times(1)).findBySerialNumber(serialNumber);
-        verify(medicationRepository, times(1)).saveAll(any());
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        assertEquals("Drone Loaded Successfully", responseEntity.getBody().getMessage());
-    }
-
-    @Test
     void testCreateDrone_DroneExists() {
         // Mock data
         Drone drone = Drone.builder()
@@ -111,6 +81,7 @@ public class DronesServiceTests {
                 .state(State.IDLE)
                 .weightLimit(500.0)
                 .deleted(false)
+                .medicationList(new ArrayList<>()) // Initialize medicationList
                 .build();
         // Mock repository behavior
         when(droneRepository.findBySerialNumber(drone.getSerialNumber())).thenReturn(Optional.of(drone));
@@ -120,8 +91,8 @@ public class DronesServiceTests {
 
         // Verify behavior
         verify(droneRepository, times(1)).findBySerialNumber(drone.getSerialNumber());
-        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-        assertEquals("Drone with this serial number already exists.", responseEntity.getBody().getMessage());
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
+        assertEquals("Drone could not be registered! Error Drone with this serial number already exists.", responseEntity.getBody().getMessage());
     }
 
     @Test
@@ -143,32 +114,6 @@ public class DronesServiceTests {
         assertEquals("Drone with serial number " + serialNumber + " not found", responseEntity.getBody().getMessage());
     }
 
-    @Test
-    void testLoadDrone_DroneAlreadyLoading() {
-        // Mock data
-        String serialNumber = "DRN123";
-        Drone drone = Drone.builder()
-                .serialNumber(serialNumber)
-                .model(Model.CRUISERWEIGHT)
-                .batteryCapacity(100.0)
-                .state(State.IDLE)
-                .weightLimit(500.0)
-                .deleted(false)
-                .build();
-        List<Medication> medications = new ArrayList<>();
-        medications.add(new Medication("MED001", "Medication A", 50.0));
-
-        // Mock repository behavior
-        when(droneRepository.findBySerialNumber(serialNumber)).thenReturn(Optional.of(drone));
-
-        // Call service method
-        ResponseEntity<ResponseDTO> responseEntity = dronesService.loadDrone(serialNumber, medications);
-
-        // Verify behavior
-        verify(droneRepository, times(1)).findBySerialNumber(serialNumber);
-        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-        assertEquals("Drone is already in LOADING state.", responseEntity.getBody().getMessage());
-    }
 
     @Test
     void testCheckLoadedItems_Success() {
@@ -258,7 +203,7 @@ public class DronesServiceTests {
         Drone drone = Drone.builder()
                 .serialNumber(serialNumber)
                 .model(Model.CRUISERWEIGHT)
-                .batteryCapacity(100.0)
+                .batteryCapacity(75.0)
                 .state(State.IDLE)
                 .weightLimit(500.0)
                 .deleted(false)

@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -58,7 +59,7 @@ public class DronesService {
             responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
             responseDTO.setStatusCode(500);
         }
-    return ResponseEntity.ok().body(responseDTO);
+    return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
     public ResponseEntity<ResponseDTO> loadDrone(String serialNumber, List<Medication> medications) {
@@ -68,6 +69,10 @@ public class DronesService {
         Optional<Drone> optionalDrone = droneRepository.findBySerialNumber(serialNumber);
 
         try {
+            // Check if medications is null
+            if (medications == null) {
+                throw new IllegalArgumentException("Medications list cannot be empty.");
+            }
             optionalDrone.ifPresentOrElse(
                     drone -> {
                         if (drone.getState() == State.LOADING) {
@@ -76,6 +81,7 @@ public class DronesService {
                         if (drone.getBatteryCapacity() < 25.0) {
                             throw new IllegalStateException("Drone battery level is below 25%. Cannot load.");
                         }
+
                         double totalMedicationWeight = medications.stream()
                                 .mapToDouble(Medication::getWeight)
                                 .sum();
