@@ -66,8 +66,16 @@ This Spring Boot application manages drones and their operations.
   ```
   GET http://localhost:8080/api/v1/drones/get-loads?serialNumber={serialNumber}
   ```
-  
 
+## Testing
+
+### Running Unit Tests
+
+You can run the unit tests using Maven:
+
+```bash
+./mvnw test
+```
 
 
 ## Technologies Used
