@@ -12,13 +12,11 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,10 +28,20 @@ public class DronesService {
 
     private final DroneRepository droneRepository;
     private final MedicationRepository medicationRepository;
+
+    public static String extractMessage(String violationMessage) {
+        // Find the start of the actual message
+        int messageStartIndex = violationMessage.indexOf("interpolatedMessage='") + "interpolatedMessage='".length();
+        // Find the end of the actual message
+        int messageEndIndex = violationMessage.indexOf("',", messageStartIndex);
+        // Extract and return the message
+        return violationMessage.substring(messageStartIndex, messageEndIndex);
+    }
+
     public ResponseEntity<ResponseDTO> createDrone(Drone drone) {
         ResponseDTO responseDTO = new ResponseDTO();
 
-        Optional<Drone> drone1 =  droneRepository.findBySerialNumber(drone.getSerialNumber());
+        Optional<Drone> drone1 = droneRepository.findBySerialNumber(drone.getSerialNumber());
 
         try {
 
@@ -42,35 +50,34 @@ public class DronesService {
                         log.info("Drone with serial number " + drone.getSerialNumber() + " already exists.");
                         throw new IllegalArgumentException("Drone with this serial number already exists.");
                     },
-                    ()-> {
+                    () -> {
                         droneRepository.save(drone);
                         responseDTO.setDrones(Collections.singletonList(drone));
                         responseDTO.setMessage("Drone registered successfully");
                         responseDTO.setStatusCode(200);
 
                     });
-        }catch (ConstraintViolationException e) {
+        } catch (ConstraintViolationException e) {
             StringBuilder errorMessage = new StringBuilder("Drone could not be registered! ");
             for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
                 errorMessage.append(extractMessage(violation.toString())).append(" ");
             }
             responseDTO.setMessage(errorMessage.toString().trim());
             responseDTO.setStatusCode(400);
-        } catch (HttpMessageNotReadableException e){
-            responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
+        } catch (HttpMessageNotReadableException e) {
+            responseDTO.setMessage("Drone could not be registered! Error " + e.getMessage());
             responseDTO.setStatusCode(400);
-        }
-        catch (Exception e){
-            responseDTO.setMessage("Drone could not be registered! Error "+e.getMessage());
+        } catch (Exception e) {
+            responseDTO.setMessage("Drone could not be registered! Error " + e.getMessage());
             responseDTO.setStatusCode(500);
         }
-    return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
+        return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
     public ResponseEntity<ResponseDTO> loadDrone(String serialNumber, List<Medication> medications) {
         ResponseDTO responseDTO = new ResponseDTO();
 
-        log.info("serial number "+serialNumber);
+        log.info("serial number " + serialNumber);
         Optional<Drone> optionalDrone = droneRepository.findBySerialNumber(serialNumber);
 
         try {
@@ -118,7 +125,7 @@ public class DronesService {
                     }
             );
         } catch (IllegalStateException | IllegalArgumentException e) {
-            log.error("error loading drone "+e);
+            log.error("error loading drone " + e);
             responseDTO.setMessage("Drone could not be loaded! " + e.getMessage());
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
         } catch (ConstraintViolationException e) {
@@ -132,10 +139,10 @@ public class DronesService {
         return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
-    public ResponseEntity<ResponseDTO> checkLoadedItems(String serialNumber){
+    public ResponseEntity<ResponseDTO> checkLoadedItems(String serialNumber) {
         ResponseDTO responseDTO = new ResponseDTO();
 
-        log.info("serial number "+serialNumber);
+        log.info("serial number " + serialNumber);
         Optional<Drone> optionalDrone = droneRepository.findBySerialNumber(serialNumber);
 
         try {
@@ -153,7 +160,7 @@ public class DronesService {
                     }
             );
         } catch (IllegalStateException | IllegalArgumentException e) {
-            log.error("error loading drone "+e);
+            log.error("error loading drone " + e);
             responseDTO.setMessage("Drone loads could not be found! " + e.getMessage());
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
         }
@@ -161,22 +168,22 @@ public class DronesService {
         return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
     }
 
-    public ResponseEntity<ResponseDTO> checkAvailableDrones(){
+    public ResponseEntity<ResponseDTO> checkAvailableDrones() {
         ResponseDTO responseDTO = new ResponseDTO();
 
         List<Drone> availableDrones = droneRepository.findAllByState(State.IDLE);
         try {
-              if (availableDrones.isEmpty()){
-                  responseDTO.setStatusCode(HttpStatus.OK.value());
-                  responseDTO.setMessage("No available drones at the moment. Try again later");
-              } else {
-                  responseDTO.setStatusCode(HttpStatus.OK.value());
-                  responseDTO.setDrones(availableDrones);
-                  responseDTO.setMessage("Here are the available drones");
-              }
+            if (availableDrones.isEmpty()) {
+                responseDTO.setStatusCode(HttpStatus.OK.value());
+                responseDTO.setMessage("No available drones at the moment. Try again later");
+            } else {
+                responseDTO.setStatusCode(HttpStatus.OK.value());
+                responseDTO.setDrones(availableDrones);
+                responseDTO.setMessage("Here are the available drones");
+            }
         } catch (IllegalStateException | IllegalArgumentException e) {
-            log.error("error loading drone "+e);
-            responseDTO.setMessage("Could not check for drones due to an error. Try again later" );
+            log.error("error loading drone " + e);
+            responseDTO.setMessage("Could not check for drones due to an error. Try again later");
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
         }
         return ResponseEntity.status(responseDTO.getStatusCode()).body(responseDTO);
@@ -186,7 +193,7 @@ public class DronesService {
 
         ResponseDTO responseDTO = new ResponseDTO();
 
-        log.info("serial number "+serialNumber);
+        log.info("serial number " + serialNumber);
         Optional<Drone> optionalDrone = droneRepository.findBySerialNumber(serialNumber);
 
         try {
@@ -195,7 +202,7 @@ public class DronesService {
 
 
                         responseDTO.setStatusCode(HttpStatus.OK.value());
-                        responseDTO.setMessage("Drone battery at "+drone.getBatteryCapacity()+"%");
+                        responseDTO.setMessage("Drone battery at " + drone.getBatteryCapacity() + "%");
                     },
                     () -> {
                         responseDTO.setMessage("Drone with serial number " + serialNumber + " not found");
@@ -203,7 +210,7 @@ public class DronesService {
                     }
             );
         } catch (IllegalStateException | IllegalArgumentException e) {
-            log.error("error loading drone "+e);
+            log.error("error loading drone " + e);
             responseDTO.setMessage("Drone battery could not be read! " + e.getMessage());
             responseDTO.setStatusCode(HttpStatus.BAD_REQUEST.value());
         }
@@ -223,15 +230,6 @@ public class DronesService {
                 log.warn("Drone with serial number " + drone.getSerialNumber() + " has low battery.");
             }
         }
-    }
-
-    public static String extractMessage(String violationMessage) {
-        // Find the start of the actual message
-        int messageStartIndex = violationMessage.indexOf("interpolatedMessage='") + "interpolatedMessage='".length();
-        // Find the end of the actual message
-        int messageEndIndex = violationMessage.indexOf("',", messageStartIndex);
-        // Extract and return the message
-        return violationMessage.substring(messageStartIndex, messageEndIndex);
     }
 
 }
